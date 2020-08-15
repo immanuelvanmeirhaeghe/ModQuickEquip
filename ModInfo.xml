@@ -1,0 +1,10 @@
+<Mod ID="ModQuickEquip">
+  <Compatible>1.8.1</Compatible>
+  <Name>
+    <EN>ModQuickEquip</EN>
+  </Name>
+  <Description>
+    <EN>ModQuickEquip is a mod for Green Hell that adds a quick equip slot for the 5th weapon attached to the related backpack pocket.</EN>
+  </Description>
+  <Version>1.0.0.0</Version>
+</Mod>
