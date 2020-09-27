@@ -1,9 +1,4 @@
-﻿using Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace ModQuickEquip.Extensions
 {
@@ -12,7 +7,7 @@ namespace ModQuickEquip.Extensions
         protected override void Start()
         {
             base.Start();
-            new GameObject("__ModQuickEquip__").AddComponent<ModQuickEquip>();
+            new GameObject($"__{nameof(ModQuickEquip)}__").AddComponent<ModQuickEquip>();
         }
     }
 }
