@@ -1,5 +1,6 @@
 ﻿using Enums;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ModQuickEquip
@@ -8,8 +9,15 @@ namespace ModQuickEquip
     {
         private static ModQuickEquip s_Instance;
         private static Player player;
+        private static InventoryBackpack inventoryBackpack;
 
-        public bool IsModQuickEquipActive = false;
+        public static Dictionary<int, ItemSlot> WeaponSlots { get; private set; } = new Dictionary<int, ItemSlot>();
+        public static ItemSlot EquippedWeaponSlot { get; private set; }
+        public static Item EquippedWeapon { get; private set; }
+        public static ItemSlot BladeSlot { get; private set; } = inventoryBackpack.GetSlotByIndex(4, BackpackPocket.Left);
+        public static int WeaponSlotIndex { get; private set; }
+
+        private bool IsModQuickEquipActive { get; set; } = false;
 
         public ModQuickEquip()
         {
@@ -26,10 +34,10 @@ namespace ModQuickEquip
         {
             try
             {
-                if (CanEquipItem && Input.GetKeyDown(KeyCode.Alpha5))
+                if (QuickEquipSlotKeyPressed())
                 {
-                    player = Player.Get();
-                    player.Equip(InventoryBackpack.Get().GetSlotByIndex(4, BackpackPocket.Left));
+                    InitData();
+                    ToggleEquippedWeapon();
                 }
             }
             catch (Exception exc)
@@ -38,7 +46,76 @@ namespace ModQuickEquip
             }
         }
 
-        private bool CanEquipItem
+        private bool QuickEquipSlotKeyPressed()
+        {
+            return Input.GetKeyDown(KeyCode.Alpha1) || Input.GetKeyDown(KeyCode.Alpha2) || Input.GetKeyDown(KeyCode.Alpha3) || Input.GetKeyDown(KeyCode.Alpha4) || Input.GetKeyDown(KeyCode.Alpha5);
+        }
+
+        private void InitData()
+        {
+            WeaponSlotIndex = GetQuickEquipKeyPressed();
+            player = Player.Get();
+            inventoryBackpack = InventoryBackpack.Get();
+            if (inventoryBackpack != null)
+            {
+                for (int i = 0; i < 5; i++)
+                {
+                    if (!WeaponSlots.ContainsKey(i))
+                    {
+                        WeaponSlots.Add(i, inventoryBackpack.GetSlotByIndex(i, BackpackPocket.Left));
+                    }
+                }
+                EquippedWeaponSlot = inventoryBackpack.m_EquippedItemSlot;
+                EquippedWeapon = inventoryBackpack.m_EquippedItem;
+            }
+
+        }
+
+        private int GetQuickEquipKeyPressed()
+        {
+            int key = 0;
+            if (Input.GetKeyDown(KeyCode.Alpha1))
+            {
+                key = 0;
+            }
+            if (Input.GetKeyDown(KeyCode.Alpha2))
+            {
+                key = 1;
+            }
+            if (Input.GetKeyDown(KeyCode.Alpha3))
+            {
+                key = 2;
+            }
+            if (Input.GetKeyDown(KeyCode.Alpha4))
+            {
+                key = 3;
+            }
+            if (Input.GetKeyDown(KeyCode.Alpha5))
+            {
+                key = 4;
+            }
+            return key;
+        }
+
+        public void ToggleEquippedWeapon()
+        {
+            if (CanEquipItem)
+            {
+                if (EquippedWeapon != null)
+                {
+                    player.HideWeapon();
+                }
+                else
+                {
+                    player.Equip(WeaponSlots.GetValueOrDefault(WeaponSlotIndex));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Verify if player can equip item at this frame
+        /// </summary>
+        public static bool CanEquipItem
         {
             get
             {
@@ -55,6 +132,10 @@ namespace ModQuickEquip
                     return false;
                 }
                 if (FishingController.Get().IsActive() && !FishingController.Get().CanHideRod())
+                {
+                    return false;
+                }
+                if (player.m_Animator.GetBool(player.m_CleanUpHash))
                 {
                     return false;
                 }
