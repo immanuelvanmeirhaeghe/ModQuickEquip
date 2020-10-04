@@ -11,10 +11,10 @@ namespace ModQuickEquip
         private static Player player;
         private static InventoryBackpack inventoryBackpack;
 
-        public static Dictionary<int, ItemSlot> WeaponSlots { get; private set; } = new Dictionary<int, ItemSlot>();
+        public static Dictionary<int, ItemSlot> WeaponSlots { get; private set; }
         public static ItemSlot EquippedWeaponSlot { get; private set; }
         public static Item EquippedWeapon { get; private set; }
-        public static ItemSlot BladeSlot { get; private set; } = inventoryBackpack.GetSlotByIndex(4, BackpackPocket.Left);
+        public static ItemSlot BladeSlot { get; private set; }
         public static int WeaponSlotIndex { get; private set; }
 
         private bool IsModQuickEquipActive { get; set; } = false;
@@ -22,6 +22,7 @@ namespace ModQuickEquip
         public ModQuickEquip()
         {
             IsModQuickEquipActive = true;
+            WeaponSlots = new Dictionary<int, ItemSlot>();
             s_Instance = this;
         }
 
@@ -34,11 +35,7 @@ namespace ModQuickEquip
         {
             try
             {
-                if (QuickEquipSlotKeyPressed())
-                {
-                    InitData();
-                    ToggleEquippedWeapon();
-                }
+                UpdateQuickEquip();
             }
             catch (Exception exc)
             {
@@ -46,68 +43,75 @@ namespace ModQuickEquip
             }
         }
 
-        private bool QuickEquipSlotKeyPressed()
+        private void UpdateQuickEquip()
         {
-            return Input.GetKeyDown(KeyCode.Alpha1) || Input.GetKeyDown(KeyCode.Alpha2) || Input.GetKeyDown(KeyCode.Alpha3) || Input.GetKeyDown(KeyCode.Alpha4) || Input.GetKeyDown(KeyCode.Alpha5);
+            if (Input.GetKeyDown(KeyCode.Alpha1))
+            {
+                WeaponSlotIndex = 0;
+                InitData();
+                InitWeaponSlots();
+                ToggleEquippedWeapon();
+            }
+            if (Input.GetKeyDown(KeyCode.Alpha2))
+            {
+                WeaponSlotIndex = 1;
+                InitData();
+                InitWeaponSlots();
+                ToggleEquippedWeapon();
+            }
+            if (Input.GetKeyDown(KeyCode.Alpha3))
+            {
+                WeaponSlotIndex = 2;
+                InitData();
+                InitWeaponSlots();
+                ToggleEquippedWeapon();
+            }
+            if (Input.GetKeyDown(KeyCode.Alpha4))
+            {
+                WeaponSlotIndex = 3;
+                InitData();
+                InitWeaponSlots();
+                ToggleEquippedWeapon();
+            }
+            if (Input.GetKeyDown(KeyCode.Alpha5))
+            {
+                WeaponSlotIndex = 4;
+                InitData();
+                InitWeaponSlots();
+                ToggleEquippedWeapon();
+            }
         }
 
         private void InitData()
         {
-            WeaponSlotIndex = GetQuickEquipKeyPressed();
             player = Player.Get();
             inventoryBackpack = InventoryBackpack.Get();
-            if (inventoryBackpack != null)
-            {
-                for (int i = 0; i < 5; i++)
-                {
-                    if (!WeaponSlots.ContainsKey(i))
-                    {
-                        WeaponSlots.Add(i, inventoryBackpack.GetSlotByIndex(i, BackpackPocket.Left));
-                    }
-                }
-                EquippedWeaponSlot = inventoryBackpack.m_EquippedItemSlot;
-                EquippedWeapon = inventoryBackpack.m_EquippedItem;
-            }
-
+            EquippedWeaponSlot = inventoryBackpack.m_EquippedItemSlot;
+            EquippedWeapon = inventoryBackpack.m_EquippedItem;
         }
 
-        private int GetQuickEquipKeyPressed()
+        private void InitWeaponSlots()
         {
-            int key = 0;
-            if (Input.GetKeyDown(KeyCode.Alpha1))
+            WeaponSlots.Clear();
+            for (int i = 0; i < 5; i++)
             {
-                key = 0;
+                WeaponSlots.Add(i, inventoryBackpack.GetSlotByIndex(i, BackpackPocket.Left));
             }
-            if (Input.GetKeyDown(KeyCode.Alpha2))
-            {
-                key = 1;
-            }
-            if (Input.GetKeyDown(KeyCode.Alpha3))
-            {
-                key = 2;
-            }
-            if (Input.GetKeyDown(KeyCode.Alpha4))
-            {
-                key = 3;
-            }
-            if (Input.GetKeyDown(KeyCode.Alpha5))
-            {
-                key = 4;
-            }
-            return key;
+            BladeSlot = WeaponSlots.GetValueOrDefault(4);
         }
 
         public void ToggleEquippedWeapon()
         {
             if (CanEquipItem)
             {
-                if (EquippedWeapon != null)
+                ItemSlot slot = inventoryBackpack.GetSlotByIndex(WeaponSlotIndex, BackpackPocket.Left);
+                if (EquippedWeaponSlot == slot )
                 {
                     player.HideWeapon();
                 }
                 else
                 {
-                    player.Equip(WeaponSlots.GetValueOrDefault(WeaponSlotIndex));
+                    player.Equip(slot);
                 }
             }
         }
@@ -135,7 +139,7 @@ namespace ModQuickEquip
                 {
                     return false;
                 }
-                if (player.m_Animator.GetBool(player.m_CleanUpHash))
+                if (Player.Get().m_Animator.GetBool(Player.Get().m_CleanUpHash))
                 {
                     return false;
                 }
