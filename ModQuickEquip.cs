@@ -108,6 +108,7 @@ namespace ModQuickEquip
                 if (EquippedWeaponSlot == slot )
                 {
                     player.HideWeapon();
+                    inventoryBackpack.m_EquippedItemSlot = null;
                 }
                 else
                 {
