@@ -94,10 +94,11 @@ namespace ModQuickEquip
 
         public void ToggleEquippedWeapon(int idx)
         {
+            CurrentWeapon = player.GetCurrentItem();
             switch (idx)
             {
                 case 0:
-                    if (player.HasItemEquiped(Quick1Slot?.m_Item?.GetName()))
+                    if (Quick1Slot?.m_Item?.GetName() == CurrentWeapon?.GetName())
                     {
                         player.HideWeapon();
                         player.ItemsFromHandsPutToInventory();
@@ -110,7 +111,7 @@ namespace ModQuickEquip
                     }
                     break;
                 case 1:
-                    if (player.HasItemEquiped(Quick2Slot?.m_Item?.GetName()))
+                    if (Quick2Slot?.m_Item?.GetName() == CurrentWeapon?.GetName())
                     {
                         player.HideWeapon();
                         player.ItemsFromHandsPutToInventory();
@@ -123,7 +124,7 @@ namespace ModQuickEquip
                     }
                     break;
                 case 2:
-                    if (player.HasItemEquiped(Quick3Slot?.m_Item?.GetName()))
+                    if (Quick3Slot?.m_Item?.GetName() == CurrentWeapon?.GetName())
                     {
                         player.HideWeapon();
                         player.ItemsFromHandsPutToInventory();
@@ -136,7 +137,7 @@ namespace ModQuickEquip
                     }
                     break;
                 case 3:
-                    if (player.HasItemEquiped(Quick4Slot?.m_Item?.GetName()))
+                    if (Quick4Slot?.m_Item?.GetName() == CurrentWeapon?.GetName())
                     {
                         player.HideWeapon();
                         player.ItemsFromHandsPutToInventory();
@@ -149,7 +150,7 @@ namespace ModQuickEquip
                     }
                     break;
                 case 4:
-                    if (player.HasItemEquiped(Quick5Slot?.m_Item?.GetName()))
+                    if (Quick5Slot?.m_Item?.GetName() == CurrentWeapon?.GetName())
                     {
                         player.HideWeapon();
                         player.ItemsFromHandsPutToInventory();
