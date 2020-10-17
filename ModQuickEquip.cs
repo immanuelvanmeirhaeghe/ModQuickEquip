@@ -94,7 +94,7 @@ namespace ModQuickEquip
 
         public void ToggleEquippedWeapon(int idx)
         {
-            CurrentWeapon = player.GetCurrentItem();
+            CurrentWeapon = inventoryBackpack.m_EquippedItem;
             switch (idx)
             {
                 case 0:
