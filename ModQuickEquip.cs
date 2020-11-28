@@ -7,32 +7,28 @@ namespace ModQuickEquip
 {
     class ModQuickEquip : MonoBehaviour
     {
-        private static ModQuickEquip s_Instance;
-        private static Player player;
-        private static InventoryBackpack inventoryBackpack;
+        private static readonly string ModName = nameof(ModQuickEquip);
+        private static ModQuickEquip Instance;
+        private static Player LocalPlayer;
+        private static InventoryBackpack LocalInventoryBackpack;
+
         private bool IsModQuickEquipActive { get; set; } = false;
-
         public static Item CurrentWeapon { get; private set; }
-
         public static ItemSlot Quick1Slot { get; private set; }
-
         public static ItemSlot Quick2Slot { get; private set; }
-
         public static ItemSlot Quick3Slot { get; private set; }
-
         public static ItemSlot Quick4Slot { get; private set; }
-
         public static ItemSlot Quick5Slot { get; private set; }
 
         public ModQuickEquip()
         {
             IsModQuickEquipActive = true;
-            s_Instance = this;
+            Instance = this;
         }
 
         public static ModQuickEquip Get()
         {
-            return s_Instance;
+            return Instance;
         }
 
         private void Update()
@@ -43,7 +39,7 @@ namespace ModQuickEquip
             }
             catch (Exception exc)
             {
-                ModAPI.Log.Write($"[{nameof(ModQuickEquip)}.{nameof(ModQuickEquip)}:{nameof(Update)}] throws exception: {exc.Message}");
+                ModAPI.Log.Write($"[{ModName}:{nameof(Update)}] throws exception:\n{exc.Message}");
             }
         }
 
@@ -79,92 +75,90 @@ namespace ModQuickEquip
 
         private void InitData()
         {
-            player = Player.Get();
-            inventoryBackpack = InventoryBackpack.Get();
+            LocalPlayer = Player.Get();
+            LocalInventoryBackpack = InventoryBackpack.Get();
         }
 
         private void InitWeaponSlots()
         {
-            Quick1Slot = inventoryBackpack.GetSlotByIndex(0, BackpackPocket.Left);
-            Quick2Slot = inventoryBackpack.GetSlotByIndex(1, BackpackPocket.Left);
-            Quick3Slot = inventoryBackpack.GetSlotByIndex(2, BackpackPocket.Left);
-            Quick4Slot = inventoryBackpack.GetSlotByIndex(3, BackpackPocket.Left);
-            Quick5Slot = inventoryBackpack.GetSlotByIndex(4, BackpackPocket.Left);
+            Quick1Slot = LocalInventoryBackpack.GetSlotByIndex(0, BackpackPocket.Left);
+            Quick2Slot = LocalInventoryBackpack.GetSlotByIndex(1, BackpackPocket.Left);
+            Quick3Slot = LocalInventoryBackpack.GetSlotByIndex(2, BackpackPocket.Left);
+            Quick4Slot = LocalInventoryBackpack.GetSlotByIndex(3, BackpackPocket.Left);
+            Quick5Slot = LocalInventoryBackpack.GetSlotByIndex(4, BackpackPocket.Left);
         }
 
         public void ToggleEquippedWeapon(int idx)
         {
-            CurrentWeapon = inventoryBackpack.m_EquippedItem;
+            CurrentWeapon = LocalInventoryBackpack.m_EquippedItem;
             switch (idx)
             {
                 case 0:
                     if (Quick1Slot?.m_Item?.GetName() == CurrentWeapon?.GetName())
                     {
-                        player.HideWeapon();
-                        player.ItemsFromHandsPutToInventory();
-                        player.UpdateHands();
+                        UnequipWeapon();
                     }
                     else
                     {
-                        player.Equip(Quick1Slot);
-                        player.ShowWeapon();
+                        EquipWeapon(Quick1Slot);
                     }
                     break;
                 case 1:
                     if (Quick2Slot?.m_Item?.GetName() == CurrentWeapon?.GetName())
                     {
-                        player.HideWeapon();
-                        player.ItemsFromHandsPutToInventory();
-                        player.UpdateHands();
+                        UnequipWeapon();
                     }
                     else
                     {
-                        player.Equip(Quick2Slot);
-                        player.ShowWeapon();
+                        EquipWeapon(Quick2Slot);
                     }
                     break;
                 case 2:
                     if (Quick3Slot?.m_Item?.GetName() == CurrentWeapon?.GetName())
                     {
-                        player.HideWeapon();
-                        player.ItemsFromHandsPutToInventory();
-                        player.UpdateHands();
+                        UnequipWeapon();
                     }
                     else
                     {
-                        player.Equip(Quick3Slot);
-                        player.ShowWeapon();
+                        EquipWeapon(Quick3Slot);
                     }
                     break;
                 case 3:
                     if (Quick4Slot?.m_Item?.GetName() == CurrentWeapon?.GetName())
                     {
-                        player.HideWeapon();
-                        player.ItemsFromHandsPutToInventory();
-                        player.UpdateHands();
+                        UnequipWeapon();
                     }
                     else
                     {
-                        player.Equip(Quick4Slot);
-                        player.ShowWeapon();
+                        EquipWeapon(Quick4Slot);
                     }
                     break;
                 case 4:
                     if (Quick5Slot?.m_Item?.GetName() == CurrentWeapon?.GetName())
                     {
-                        player.HideWeapon();
-                        player.ItemsFromHandsPutToInventory();
-                        player.UpdateHands();
+                        UnequipWeapon();
                     }
                     else
                     {
-                        player.Equip(Quick5Slot);
-                        player.ShowWeapon();
+                        EquipWeapon(Quick5Slot);
                     }
                     break;
                 default:
                     break;
             }
+        }
+
+        private static void EquipWeapon(ItemSlot slot)
+        {
+            LocalPlayer.Equip(slot);
+            LocalPlayer.ShowWeapon();
+        }
+
+        private static void UnequipWeapon()
+        {
+            LocalPlayer.HideWeapon();
+            LocalPlayer.ItemsFromHandsPutToInventory();
+            LocalPlayer.UpdateHands();
         }
 
         /// <summary>
