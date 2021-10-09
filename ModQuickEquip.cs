@@ -1,15 +1,25 @@
 ﻿using Enums;
+using ModQuickEquip.Enums;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Xml;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace ModQuickEquip
 {
+    /// <summary>
+    /// ModQuickEquip is a mod for Green Hell that adds a quick equip slot
+    /// for the 5th weapon - knive slot attached to the related backpack pocket
+    /// and keybound to Alpha5 or the key configurable in ModAPI
+    /// </summary>
     class ModQuickEquip : MonoBehaviour
     {
         private static readonly string ModName = nameof(ModQuickEquip);
         private static ModQuickEquip Instance;
         private static Player LocalPlayer;
+        private static HUDManager LocalHUDManager;
         private static InventoryBackpack LocalInventoryBackpack;
 
         private bool IsModQuickEquipActive { get; set; } = false;
@@ -20,9 +30,90 @@ namespace ModQuickEquip
         public static ItemSlot Quick4Slot { get; private set; }
         public static ItemSlot Quick5Slot { get; private set; }
 
+        public bool IsModActiveForMultiplayer { get; private set; }
+        public bool IsModActiveForSingleplayer => ReplTools.AmIMaster();
+
+        private void HandleException(Exception exc, string methodName)
+        {
+            string info = $"[{ModName}:{methodName}] throws exception:\n{exc.Message}";
+            ModAPI.Log.Write(info);
+            ShowHUDBigInfo(HUDBigInfoMessage(info, MessageType.Error, Color.red));
+        }
+
+        public static string PermissionChangedMessage(string permission, string reason)
+           => $"Permission to use mods and cheats in multiplayer was {permission} because {reason}.";
+        public static string HUDBigInfoMessage(string message, MessageType messageType, Color? headcolor = null)
+            => $"<color=#{ (headcolor != null ? ColorUtility.ToHtmlStringRGBA(headcolor.Value) : ColorUtility.ToHtmlStringRGBA(Color.red))  }>{messageType}</color>\n{message}";
+
+        public void ShowHUDBigInfo(string text)
+        {
+            string header = $"{ModName} Info";
+            string textureName = HUDInfoLogTextureType.Count.ToString();
+            HUDBigInfo hudBigInfo = (HUDBigInfo)LocalHUDManager.GetHUD(typeof(HUDBigInfo));
+            HUDBigInfoData.s_Duration = 2f;
+            HUDBigInfoData hudBigInfoData = new HUDBigInfoData
+            {
+                m_Header = header,
+                m_Text = text,
+                m_TextureName = textureName,
+                m_ShowTime = Time.time
+            };
+            hudBigInfo.AddInfo(hudBigInfoData);
+            hudBigInfo.Show(true);
+        }
+
+        public void ShowHUDInfoLog(string itemID, string localizedTextKey)
+        {
+            var localization = GreenHellGame.Instance.GetLocalization();
+            HUDMessages hUDMessages = (HUDMessages)LocalHUDManager.GetHUD(typeof(HUDMessages));
+            hUDMessages.AddMessage(
+                $"{localization.Get(localizedTextKey)}  {localization.Get(itemID)}"
+                );
+        }
+
+        private static readonly string RuntimeConfigurationFile = Path.Combine(Application.dataPath.Replace("GH_Data", "Mods"), "RuntimeConfiguration.xml");
+        private static KeyCode ModKeybindingId { get; set; } = KeyCode.Alpha5;
+        private KeyCode GetConfigurableKey(string buttonId)
+        {
+            KeyCode configuredKeyCode = default;
+            string configuredKeybinding = string.Empty;
+
+            try
+            {
+                if (File.Exists(RuntimeConfigurationFile))
+                {
+                    using (var xmlReader = XmlReader.Create(new StreamReader(RuntimeConfigurationFile)))
+                    {
+                        while (xmlReader.Read())
+                        {
+                            if (xmlReader["ID"] == ModName)
+                            {
+                                if (xmlReader.ReadToFollowing(nameof(Button)) && xmlReader["ID"] == buttonId)
+                                {
+                                    configuredKeybinding = xmlReader.ReadElementContentAsString();
+                                }
+                            }
+                        }
+                    }
+                }
+
+                configuredKeybinding = configuredKeybinding?.Replace("NumPad", "Keypad").Replace("Oem", "");
+
+                configuredKeyCode = (KeyCode)(!string.IsNullOrEmpty(configuredKeybinding)
+                                                            ? Enum.Parse(typeof(KeyCode), configuredKeybinding)
+                                                            : GetType()?.GetProperty(buttonId)?.GetValue(this));
+                return configuredKeyCode;
+            }
+            catch (Exception exc)
+            {
+                HandleException(exc, nameof(GetConfigurableKey));
+                configuredKeyCode = (KeyCode)(GetType()?.GetProperty(buttonId)?.GetValue(this));
+                return configuredKeyCode;
+            }
+        }
+
         public ModQuickEquip()
         {
-            IsModQuickEquipActive = true;
             Instance = this;
         }
 
@@ -31,45 +122,47 @@ namespace ModQuickEquip
             return Instance;
         }
 
-        private void Update()
+        public void Start()
         {
-            try
-            {
-                UpdateQuickEquip();
-            }
-            catch (Exception exc)
-            {
-                ModAPI.Log.Write($"[{ModName}:{nameof(Update)}] throws exception:\n{exc.Message}");
-            }
+            ModManager.ModManager.onPermissionValueChanged += ModManager_onPermissionValueChanged;
+            ModKeybindingId = GetConfigurableKey(nameof(ModKeybindingId));
         }
 
-        private void UpdateQuickEquip()
+        private void ModManager_onPermissionValueChanged(bool optionValue)
         {
-            if (CanEquipItem)
-            {
-                InitData();
-                InitWeaponSlots();
+            string reason = optionValue ? "the game host allowed usage" : "the game host did not allow usage";
+            IsModActiveForMultiplayer = optionValue;
 
-                if (Input.GetKeyDown(KeyCode.Alpha1))
-                {
-                    ToggleEquippedWeapon(0);
-                }
-                if (Input.GetKeyDown(KeyCode.Alpha2))
-                {
-                    ToggleEquippedWeapon(1);
-                }
-                if (Input.GetKeyDown(KeyCode.Alpha3))
-                {
-                    ToggleEquippedWeapon(2);
-                }
-                if (Input.GetKeyDown(KeyCode.Alpha4))
-                {
-                    ToggleEquippedWeapon(3);
-                }
-                if (Input.GetKeyDown(KeyCode.Alpha5))
-                {
-                    ToggleEquippedWeapon(4);
-                }
+            ShowHUDBigInfo(
+                          optionValue ?
+                            HUDBigInfoMessage(PermissionChangedMessage($"granted", $"{reason}"), MessageType.Info, Color.green)
+                            : HUDBigInfoMessage(PermissionChangedMessage($"revoked", $"{reason}"), MessageType.Info, Color.yellow)
+                            );
+        }
+
+        private void Update()
+        {
+            InitData();
+            InitWeaponSlots();
+            if (Input.GetKeyDown(KeyCode.Alpha1))
+            {
+                EquipWeapon(Quick1Slot);
+            }
+            if (Input.GetKeyDown(KeyCode.Alpha2))
+            {
+                EquipWeapon(Quick2Slot);
+            }
+            if (Input.GetKeyDown(KeyCode.Alpha3))
+            {
+                EquipWeapon(Quick3Slot);
+            }
+            if (Input.GetKeyDown(KeyCode.Alpha4))
+            {
+                EquipWeapon(Quick4Slot);
+            }
+            if (Input.GetKeyDown(ModKeybindingId))
+            {
+                EquipWeapon(Quick5Slot);
             }
         }
 
@@ -77,6 +170,7 @@ namespace ModQuickEquip
         {
             LocalPlayer = Player.Get();
             LocalInventoryBackpack = InventoryBackpack.Get();
+            LocalHUDManager = HUDManager.Get();
         }
 
         private void InitWeaponSlots()
@@ -88,111 +182,11 @@ namespace ModQuickEquip
             Quick5Slot = LocalInventoryBackpack.GetSlotByIndex(4, BackpackPocket.Left);
         }
 
-        public void ToggleEquippedWeapon(int idx)
+        private void EquipWeapon(ItemSlot slot)
         {
-            CurrentWeapon = LocalInventoryBackpack.m_EquippedItem;
-            switch (idx)
+            if (IsModActiveForSingleplayer || IsModActiveForMultiplayer)
             {
-                case 0:
-                    if (Quick1Slot?.m_Item?.GetName() == CurrentWeapon?.GetName())
-                    {
-                        UnequipWeapon();
-                    }
-                    else
-                    {
-                        EquipWeapon(Quick1Slot);
-                    }
-                    break;
-                case 1:
-                    if (Quick2Slot?.m_Item?.GetName() == CurrentWeapon?.GetName())
-                    {
-                        UnequipWeapon();
-                    }
-                    else
-                    {
-                        EquipWeapon(Quick2Slot);
-                    }
-                    break;
-                case 2:
-                    if (Quick3Slot?.m_Item?.GetName() == CurrentWeapon?.GetName())
-                    {
-                        UnequipWeapon();
-                    }
-                    else
-                    {
-                        EquipWeapon(Quick3Slot);
-                    }
-                    break;
-                case 3:
-                    if (Quick4Slot?.m_Item?.GetName() == CurrentWeapon?.GetName())
-                    {
-                        UnequipWeapon();
-                    }
-                    else
-                    {
-                        EquipWeapon(Quick4Slot);
-                    }
-                    break;
-                case 4:
-                    if (Quick5Slot?.m_Item?.GetName() == CurrentWeapon?.GetName())
-                    {
-                        UnequipWeapon();
-                    }
-                    else
-                    {
-                        EquipWeapon(Quick5Slot);
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        private static void EquipWeapon(ItemSlot slot)
-        {
-            LocalPlayer.Equip(slot);
-            LocalPlayer.ShowWeapon();
-        }
-
-        private static void UnequipWeapon()
-        {
-            LocalPlayer.HideWeapon();
-            LocalPlayer.ItemsFromHandsPutToInventory();
-            LocalPlayer.UpdateHands();
-        }
-
-        /// <summary>
-        /// Verify if player can equip item at this frame
-        /// </summary>
-        public static bool CanEquipItem
-        {
-            get
-            {
-                if (HarvestingAnimalController.Get().IsActive())
-                {
-                    return false;
-                }
-                if (MudMixerController.Get().IsActive())
-                {
-                    return false;
-                }
-                if (HarvestingSmallAnimalController.Get().IsActive())
-                {
-                    return false;
-                }
-                if (FishingController.Get().IsActive() && !FishingController.Get().CanHideRod())
-                {
-                    return false;
-                }
-                if (Player.Get().m_Animator.GetBool(Player.Get().m_CleanUpHash))
-                {
-                    return false;
-                }
-                if (ScenarioManager.Get().IsBoolVariableTrue("PlayerMechGameEnding"))
-                {
-                    return false;
-                }
-                return true;
+                LocalPlayer.Equip(slot);
             }
         }
     }

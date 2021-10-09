@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("ModAPI.ModQuickEquip")]
-[assembly: AssemblyDescription("ModQuickEquip is a mod for Green Hell that adds a quick equip slot for the 5th weapon attached to the related backpack pocket. It adds toggle hide weapon to all weapon slots also.")]
+[assembly: AssemblyDescription("ModQuickEquip is a mod for Green Hell that adds a quick equip slot for the 5th weapon attached to the related backpack pocket and keybound to Alpha5 or the key configurable in ModAPI")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Dragon Legion")]
-[assembly: AssemblyProduct("ModQuickEquip.Properties")]
-[assembly: AssemblyCopyright("Copyright ©  2020")]
+[assembly: AssemblyCompany("[Dragon Legion]Immaanuel")]
+[assembly: AssemblyProduct("ModAPI.ModQuickEquip")]
+[assembly: AssemblyCopyright("Copyright ©  2021")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -29,5 +29,5 @@ using System.Runtime.InteropServices;
 //      Build Number
 //      Revision
 //
-[assembly: AssemblyVersion("1.0.1.2")]
-[assembly: AssemblyFileVersion("1.0.1.2")]
+[assembly: AssemblyVersion("1.0.1.3")]
+[assembly: AssemblyFileVersion("1.0.1.3")]
